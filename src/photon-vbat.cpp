@@ -12,20 +12,21 @@ PhotonVBAT::~PhotonVBAT() {
 }
 
 float PhotonVBAT::readVBAT() {
-	static bool enabled = false;
-	if (!enabled) {
-		// If you don't analogRead once, before doing readChannel, you'll sometimes get inaccurate values.
-		// for readVBAT and I can't figure out why.
-		analogRead(sparePin);
-		enabled = true;
-		ADC_VBATCmd(ENABLE);
-	}
+	// If you don't analogRead once, before doing readChannel, you'll sometimes get inaccurate values.
+	// for readVBAT and I can't figure out why.
+	analogRead(sparePin);
+	ADC_VBATCmd(ENABLE);
 
 	uint16_t value = readChannel(ADC_Channel_18);
 	// Serial.printlnf("value=%d", value);
 
 	// Note: VBAT input goes to 3.6, not 3.3.
-	return (float)value * vbatCal / 4095.0;
+	float result = (float)value * vbatCal / 4095.0;
+
+	// Disable the VBAT every time it's read, because otherwise the voltage divider will cause battery drain
+	ADC_VBATCmd(DISABLE);
+
+	return result;
 }
 
 float PhotonVBAT::readTempC() {
